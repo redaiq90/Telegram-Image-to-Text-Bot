@@ -40,7 +40,6 @@ Edit config.py and set your Telegram bot token and OCR API key.
 
 
 4.  **Run the bot:**
-5.  
-6.  python main.py
+  
+ python main.py
 
-7. 
