@@ -36,9 +36,10 @@ This Telegram bot uses OCR to extract text from images. Users can send images, a
   pip install -r requirements.txt
 
 3. **Set up the environment variables:**
+
 Edit config.py and set your Telegram bot token and OCR API key.
 
-4.  **Run the bot:**
+5.  **Run the bot:**
 
        python main.py
 
