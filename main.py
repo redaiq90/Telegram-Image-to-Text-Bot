@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 def start(update: Update, context: CallbackContext):
     user_info = update.message.from_user
     first_name = user_info.first_name
-    update.message.reply_text(f'''
+    await update.message.reply_text(f'''
 {first_name} مرحباً
 
 **⚡️ البوت لإستخراج النصوص من الصور** \n \n **قم بإرسال صورة لاستخراج النص منها**
@@ -24,7 +24,7 @@ def start(update: Update, context: CallbackContext):
 ''')
 
 def help_command(update: Update, context: CallbackContext):
-    update.message.reply_text('''
+    await update.message.reply_text('''
 أرسل صورة لاستخراج النص منها !
 ''')
 
@@ -36,7 +36,7 @@ def ocr_image(update: Update, context: CallbackContext):
 
     try:
         # Ask user to choose language
-        message = update.message.reply_text('اختر اللغة المراد استخراجها:',
+        message = await update.message.reply_text('اختر اللغة المراد استخراجها:',
                                             reply_markup=InlineKeyboardMarkup([
                                                 [
                                                     InlineKeyboardButton("العربية", callback_data="ara"),
@@ -83,7 +83,7 @@ def ocr_image(update: Update, context: CallbackContext):
         context.user_data['message_id'] = message.message_id
 
     except Exception as e:
-        update.message.reply_text(f'حدث خطأ:\n {str(e)}\n@ri2da قم يإعادة توجيه الرسالة للمطور')
+        await update.message.reply_text(f'حدث خطأ:\n {str(e)}\n@ri2da قم يإعادة توجيه الرسالة للمطور')
         logger.error(f'Exception: {e}')
 
 def language_callback(update: Update, context: CallbackContext):
@@ -104,7 +104,7 @@ def language_callback(update: Update, context: CallbackContext):
 
     result = response.json()
     if result['IsErroredOnProcessing']:
-        context.bot.edit_message_text(
+        await context.bot.edit_message_text(
             chat_id=query.message.chat_id,
             message_id=message_id,
             text='حدث خطأ ، حاول مرة اخرى'
@@ -112,17 +112,17 @@ def language_callback(update: Update, context: CallbackContext):
         logger.error(f"OCR Error: {result.get('ErrorMessage', 'Unknown error')}")
     else:
         parsed_text = result['ParsedResults'][0]['ParsedText']
-        context.bot.edit_message_text(
+        await context.bot.edit_message_text(
             chat_id=query.message.chat_id,
             message_id=message_id,
-            text=f':النص المُستخرَج\n\n`{parsed_text}`'
+            text=f"`{parsed_text}`"
         )
 
     # Clean up
     os.remove(photo_path)
 
     # Thank user for using the bot
-    context.bot.send_message(
+    await context.bot.send_message(
         chat_id=query.message.chat_id,
         text='شكرا لاستخدامك بوتنا !\n\nللمزيد انظم للقناة\n@iqbots0\n\n@ri2da المطور'
     )
