@@ -101,7 +101,6 @@ async def language_callback(update: Update, context: CallbackContext):
             files={'file': image_file},
             data={'apikey': OCR_API_KEY, 'language': language_code}
         )
-
     result = response.json()
     if result['IsErroredOnProcessing']:
         await context.bot.edit_message_text(
