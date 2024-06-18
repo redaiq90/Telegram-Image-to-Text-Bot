@@ -2,7 +2,7 @@ import os
 import logging
 import requests
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
-from telegram.ext import Updater, CommandHandler, CallbackContext, MessageHandler, Filters, CallbackQueryHandler
+from telegram.ext import Updater, CommandHandler, CallbackContext, MessageHandler, filters, CallbackQueryHandler
 from config import TOKEN, OCR_API_KEY
 
 # Set up logging
@@ -132,7 +132,7 @@ def main():
 
     updater.dispatcher.add_handler(CommandHandler("start", start))
     updater.dispatcher.add_handler(CommandHandler("help", help_command))
-    updater.dispatcher.add_handler(MessageHandler(Filters.photo, ocr_image))
+    updater.dispatcher.add_handler(MessageHandler(filters.photo, ocr_image))
     updater.dispatcher.add_handler(CallbackQueryHandler(language_callback))
 
     updater.start_polling()
