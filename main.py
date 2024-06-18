@@ -32,7 +32,8 @@ async def ocr_image(update: Update, context: CallbackContext):
     # Download the photo
     photo_file = await update.message.photo[-1].get_file()
     photo_path = 'temp_photo.jpg'
-    await photo_file.download(photo_path)
+    await photo_file.download_to_drive(photo_path)
+
 
     try:
         # Ask user to choose language
