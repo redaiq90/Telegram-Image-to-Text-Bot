@@ -1,7 +1,7 @@
 import os
 import logging
 import requests
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Updater, CommandHandler, CallbackContext, MessageHandler, filters, CallbackQueryHandler
 from config import TOKEN, OCR_API_KEY
 
