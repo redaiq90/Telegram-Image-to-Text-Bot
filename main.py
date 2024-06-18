@@ -13,19 +13,19 @@ async def start(update: Update, context: CallbackContext):
     user_info = update.message.from_user
     first_name = user_info.first_name
     await update.message.reply_text(f'''
-Hello {first_name},
+{first_name} مرحباً
 
-This bot extracts text from images using OCR ⚡️ \n \n Send an image to get started
+**⚡️ البوت لإستخراج النصوص من الصور** \n \n **قم بإرسال صورة لاستخراج النص منها**
 
-Available commands:
+:الأوامر
 
-/start - Show this message
-/help - Get help using the bot
+/start - أمر البداية
+/help - للحصول على مساعدة
 ''')
 
 async def help_command(update: Update, context: CallbackContext):
     await update.message.reply_text('''
-Send an image to extract text from it using OCR😌
+أرسل صورة لاستخراج النص منها !
 ''')
 
 async def ocr_image(update: Update, context: CallbackContext):
@@ -34,7 +34,7 @@ async def ocr_image(update: Update, context: CallbackContext):
     await photo_file.download_to_drive(photo_path)
 
     try:
-        message = await update.message.reply_text('wait... Processing the image👀⏳')
+        message = await update.message.reply_text('👀⏳انتضر .... جارٍ الاستخراج')
         message_id = message.message_id
 
         # Send the image to OCR.Space API
@@ -50,7 +50,7 @@ async def ocr_image(update: Update, context: CallbackContext):
             await context.bot.edit_message_text(
                 chat_id=update.message.chat_id,
                 message_id=message_id,
-                text='Mtsmm an error occurred while processing the image...Try again'
+                text='حدث خطأ ، حاول مرة اخرى'
             )
             logger.error(f"OCR Error: {result.get('ErrorMessage', 'Unknown error')}")
         else:
@@ -58,19 +58,19 @@ async def ocr_image(update: Update, context: CallbackContext):
             await context.bot.edit_message_text(
                 chat_id=update.message.chat_id,
                 message_id=message_id,
-                text=f'Extracted text:\n{parsed_text}'
+                text=f':النص المُستخرَج\n\n`{parsed_text}`'
             )
 
     except Exception as e:
         await context.bot.edit_message_text(
             chat_id=update.message.chat_id,
             message_id=message_id,
-            text=f'An error occurred: {str(e)}'
+            text=f'حدث خطأ:\n {str(e)}\n@ri2da قم يإعادة توجيه الرسالة للمطور'
         )
         logger.error(f'Exception: {e}')
     finally:
         os.remove(photo_path)
-        await update.message.reply_text('Thanks for using my bot🤛🏽   \n \n @A13XBOTZ\n\nJoin this channel to make me smile:)')
+        await update.message.reply_text('شكرا لاستخدامك بوتنا !\n\nللمزيد انظم للقناة\n@iqbots0\n\n@ri2da المطور')
 
 def main() -> None:
     application = ApplicationBuilder().token(TOKEN).build()
