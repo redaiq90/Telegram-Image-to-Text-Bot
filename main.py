@@ -9,7 +9,7 @@ from config import TOKEN, OCR_API_KEY
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def start(update: Update, context: CallbackContext):
+async def start(update: Update, context: CallbackContext):
     user_info = update.message.from_user
     first_name = user_info.first_name
     await update.message.reply_text(f'''
@@ -23,16 +23,16 @@ def start(update: Update, context: CallbackContext):
 /help - للحصول على مساعدة
 ''')
 
-def help_command(update: Update, context: CallbackContext):
+async def help_command(update: Update, context: CallbackContext):
     await update.message.reply_text('''
 أرسل صورة لاستخراج النص منها !
 ''')
 
-def ocr_image(update: Update, context: CallbackContext):
+async def ocr_image(update: Update, context: CallbackContext):
     # Download the photo
     photo_file = update.message.photo[-1].get_file()
     photo_path = 'temp_photo.jpg'
-    photo_file.download_to_drive(photo_path)
+    await photo_file.download_to_drive(photo_path)
 
     try:
         # Ask user to choose language
