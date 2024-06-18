@@ -127,16 +127,15 @@ def language_callback(update: Update, context: CallbackContext):
         text='شكرا لاستخدامك بوتنا !\n\nللمزيد انظم للقناة\n@iqbots0\n\n@ri2da المطور'
     )
 
-def main():
-    updater = Updater(TOKEN, use_context=True)
+def main() -> None:
+    application = ApplicationBuilder().token(TOKEN).build()
 
-    updater.dispatcher.add_handler(CommandHandler("start", start))
-    updater.dispatcher.add_handler(CommandHandler("help", help_command))
-    updater.dispatcher.add_handler(MessageHandler(filters.photo, ocr_image))
-    updater.dispatcher.add_handler(CallbackQueryHandler(language_callback))
-
-    updater.start_polling()
-    updater.idle()
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(MessageHandler(filters.PHOTO, ocr_image))
+    application.add_handler(CallbackQueryHandler(language_callback))
+    logger.info('Starting bot')
+    application.run_polling()
 
 if __name__ == '__main__':
     main()
