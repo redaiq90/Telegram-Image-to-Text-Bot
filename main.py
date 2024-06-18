@@ -2,7 +2,7 @@ import os
 import logging
 import requests
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update
-from telegram.ext import CommandHandler, CallbackContext, MessageHandler, filters, CallbackQueryHandler
+from telegram.ext import ApplicationBuilder, CommandHandler, CallbackContext, MessageHandler, filters, CallbackQueryHandler
 from config import TOKEN, OCR_API_KEY
 
 # Set up logging
