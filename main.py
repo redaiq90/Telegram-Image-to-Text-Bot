@@ -86,9 +86,9 @@ async def ocr_image(update: Update, context: CallbackContext):
         await update.message.reply_text(f'حدث خطأ:\n {str(e)}\n@ri2da قم يإعادة توجيه الرسالة للمطور')
         logger.error(f'Exception: {e}')
 
-def language_callback(update: Update, context: CallbackContext):
+async def language_callback(update: Update, context: CallbackContext):
     query = update.callback_query
-    context.bot.answer_callback_query(query.id)
+    await context.bot.answer_callback_query(query.id)
     language_code = query.data
 
     photo_path = context.user_data.get('photo_path')
