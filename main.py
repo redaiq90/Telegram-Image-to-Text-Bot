@@ -3,7 +3,7 @@ import logging
 import requests
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackContext, MessageHandler, filters
-from config import TOKEN, OCR_API_KEY  # Import the config
+from config import TOKEN, OCR_API_KEY 
 
 # Set up logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -34,7 +34,6 @@ async def ocr_image(update: Update, context: CallbackContext):
     await photo_file.download_to_drive(photo_path)
 
     try:
-        # Send a "Please wait..." message and store the message ID
         message = await update.message.reply_text('wait... Processing the image👀⏳')
         message_id = message.message_id
 
