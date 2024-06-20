@@ -22,10 +22,10 @@ async def start(update: Update, context: CallbackContext):
 
 **⚡️ البوت لإستخراج النصوص من الصور** \n \n **قم بإرسال صورة لاستخراج النص منها**
 
-:الأوامر
+الأوامر
 
-/start - أمر البداية
-/help - للحصول على مساعدة
+/start أمر البداية
+/help للحصول على مساعدة
 '''
     #await asyncio.sleep(1)  # Simulating some asynchronous task
     await update.message.reply_text(welcome, parse_mode="MarkdownV2")
