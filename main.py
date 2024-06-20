@@ -2,7 +2,6 @@ import os
 import logging
 import requests
 import asyncio
-import time
 from datetime import datetime, timedelta
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackContext, MessageHandler, filters, CallbackQueryHandler
@@ -41,8 +40,8 @@ async def ocr_image(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
     
     # Spam protection
-    current_time = time.time()
-    if user_id in last_message_time and current_time - last_message_time[user_id] < 5:
+    current_time = datetime.now()
+    if user_id in last_message_time and (current_time - last_message_time[user_id]) < timedelta(seconds=5):
         return  # Ignore message if it's considered spam
     last_message_time[user_id] = current_time
     
@@ -99,15 +98,29 @@ async def ocr_image(update: Update, context: CallbackContext):
         context.user_data['message_id'] = message.message_id
         
         # Schedule deletion if language is not chosen within 15 minutes
-        await asyncio.sleep(900)  # 900 seconds = 15 minutes
-        if 'photo_path' in context.user_data:
-            os.remove(context.user_data['photo_path'])
-            del context.user_data['photo_path']
-            logger.info(f"Deleted temporary file {photo_path} after 15 minutes.")
+        loop = asyncio.get_event_loop()
+        loop.create_task(delete_image_after_timeout(context, update.message.chat_id, message.message_id, photo_path))
 
     except Exception as e:
         await update.message.reply_text(f'حدث خطأ:\n {str(e)}\n@ri2da قم يإعادة توجيه الرسالة للمطور')
         logger.error(f'Exception: {e}')
+
+async def delete_image_after_timeout(context, chat_id, message_id, photo_path):
+    await asyncio.sleep(900)  # 900 seconds = 15 minutes
+    if 'photo_path' in context.user_data:
+        os.remove(context.user_data['photo_path'])
+        del context.user_data['photo_path']
+        logger.info(f"Deleted temporary file {photo_path} after 15 minutes.")
+
+        # Inform user to try again if they attempt to use an inline query after timeout
+        try:
+            await context.bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=message_id,
+                text='انتهى الوقت حاول مجددا'
+            )
+        except Exception as e:
+            logger.error(f"Error editing message: {e}")
 
 async def language_callback(update: Update, context: CallbackContext):
     query = update.callback_query
@@ -117,39 +130,50 @@ async def language_callback(update: Update, context: CallbackContext):
     photo_path = context.user_data.get('photo_path')
     message_id = context.user_data.get('message_id')
 
-    # Send the image to OCR.Space API with selected language
-    with open(photo_path, 'rb') as image_file:
-        response = requests.post(
-            'https://api.ocr.space/parse/image',
-            files={'file': image_file},
-            data={'apikey': OCR_API_KEY, 'language': language_code}
-        )
-    result = response.json()
-    if result['IsErroredOnProcessing']:
+    try:
+        # Send the image to OCR.Space API with selected language
+        with open(photo_path, 'rb') as image_file:
+            response = requests.post(
+                'https://api.ocr.space/parse/image',
+                files={'file': image_file},
+                data={'apikey': OCR_API_KEY, 'language': language_code}
+            )
+        result = response.json()
+        
+        if result['IsErroredOnProcessing']:
+            await context.bot.edit_message_text(
+                chat_id=query.message.chat_id,
+                message_id=message_id,
+                text='حدث خطأ ، حاول مرة اخرى'
+            )
+            logger.error(f"OCR Error: {result.get('ErrorMessage', 'Unknown error')}")
+        else:
+            parsed_text = result['ParsedResults'][0]['ParsedText']
+            await context.bot.edit_message_text(
+                chat_id=query.message.chat_id,
+                message_id=message_id,
+                text=f"`{parsed_text}`",
+                parse_mode='MarkdownV2'
+            )
+
+    except Exception as e:
         await context.bot.edit_message_text(
             chat_id=query.message.chat_id,
             message_id=message_id,
-            text='حدث خطأ ، حاول مرة اخرى'
+            text=f'حدث خطأ:\n {str(e)}\n@ri2da قم يإعادة توجيه الرسالة للمطور'
         )
-        logger.error(f"OCR Error: {result.get('ErrorMessage', 'Unknown error')}")
-    else:
-        parsed_text = result['ParsedResults'][0]['ParsedText']
-        await context.bot.edit_message_text(
+        logger.error(f'Exception: {e}')
+
+    finally:
+        # Clean up
+        os.remove(photo_path)
+        del context.user_data['photo_path']
+
+        # Thank user for using the bot
+        await context.bot.send_message(
             chat_id=query.message.chat_id,
-            message_id=message_id,
-            text=f"`{parsed_text}`",
-            parse_mode='MarkdownV2'
+            text='شكرا لاستخدامك بوتنا !\n\nللمزيد انظم للقناة\n@iqbots0\n\n@ri2da المطور'
         )
-
-    # Clean up
-    os.remove(photo_path)
-    del context.user_data['photo_path']
-
-    # Thank user for using the bot
-    await context.bot.send_message(
-        chat_id=query.message.chat_id,
-        text='شكرا لاستخدامك بوتنا !\n\nللمزيد انظم للقناة\n@iqbots0\n\n@ri2da المطور'
-    )
 
 async def handle_no_language_choice(update: Update, context: CallbackContext):
     await update.message.reply_text("انتهى الوقت حاوب مجددا")
@@ -161,7 +185,7 @@ def main() -> None:
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(MessageHandler(filters.PHOTO, ocr_image))
     application.add_handler(CallbackQueryHandler(language_callback))
-    application.add_handler(MessageHandler(filters.Text & ~filters.Command, handle_no_language_choice))
+    #application.add_handler(MessageHandler(filters.TEXT & filters.command, handle_no_language_choice))
     logger.info('Starting bot')
     application.run_polling()
 
