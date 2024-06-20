@@ -113,7 +113,8 @@ async def language_callback(update: Update, context: CallbackContext):
         await context.bot.edit_message_text(
             chat_id=query.message.chat_id,
             message_id=message_id,
-            text=f"`{parsed_text}`"
+            text=f"`{parsed_text}`",
+            parse_mode='MarkdownV2'
         )
 
     # Clean up
