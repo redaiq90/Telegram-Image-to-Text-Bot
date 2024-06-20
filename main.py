@@ -161,7 +161,7 @@ def main() -> None:
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(MessageHandler(filters.PHOTO, ocr_image))
     application.add_handler(CallbackQueryHandler(language_callback))
-    application.add_handler(MessageHandler(filters.text & ~filters.command, handle_no_language_choice))
+    application.add_handler(MessageHandler(filters.Text & ~filters.Command, handle_no_language_choice))
     logger.info('Starting bot')
     application.run_polling()
 
