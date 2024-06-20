@@ -1,6 +1,9 @@
 import os
 import logging
 import requests
+import asyncio
+import time
+from datetime import datetime, timedelta
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackContext, MessageHandler, filters, CallbackQueryHandler
 from config import TOKEN, OCR_API_KEY
@@ -9,9 +12,13 @@ from config import TOKEN, OCR_API_KEY
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Dictionary to track last message times for spam protection
+last_message_time = {}
+
 async def start(update: Update, context: CallbackContext):
     user_info = update.message.from_user
     first_name = user_info.first_name
+    await asyncio.sleep(1)  # Simulating some asynchronous task
     await update.message.reply_text(f'''
 {first_name} مرحباً
 
@@ -24,11 +31,21 @@ async def start(update: Update, context: CallbackContext):
 ''')
 
 async def help_command(update: Update, context: CallbackContext):
+    await asyncio.sleep(1)  # Simulating some asynchronous task
     await update.message.reply_text('''
 أرسل صورة لاستخراج النص منها !
 ''')
 
 async def ocr_image(update: Update, context: CallbackContext):
+    global last_message_time
+    user_id = update.message.from_user.id
+    
+    # Spam protection
+    current_time = time.time()
+    if user_id in last_message_time and current_time - last_message_time[user_id] < 5:
+        return  # Ignore message if it's considered spam
+    last_message_time[user_id] = current_time
+    
     photo_file = await update.message.photo[-1].get_file()
     photo_path = 'temp_photo.jpg'
     await photo_file.download_to_drive(photo_path)
@@ -80,6 +97,13 @@ async def ocr_image(update: Update, context: CallbackContext):
                                             ]))
         context.user_data['photo_path'] = photo_path
         context.user_data['message_id'] = message.message_id
+        
+        # Schedule deletion if language is not chosen within 15 minutes
+        await asyncio.sleep(900)  # 900 seconds = 15 minutes
+        if 'photo_path' in context.user_data:
+            os.remove(context.user_data['photo_path'])
+            del context.user_data['photo_path']
+            logger.info(f"Deleted temporary file {photo_path} after 15 minutes.")
 
     except Exception as e:
         await update.message.reply_text(f'حدث خطأ:\n {str(e)}\n@ri2da قم يإعادة توجيه الرسالة للمطور')
@@ -119,6 +143,7 @@ async def language_callback(update: Update, context: CallbackContext):
 
     # Clean up
     os.remove(photo_path)
+    del context.user_data['photo_path']
 
     # Thank user for using the bot
     await context.bot.send_message(
@@ -126,12 +151,17 @@ async def language_callback(update: Update, context: CallbackContext):
         text='شكرا لاستخدامك بوتنا !\n\nللمزيد انظم للقناة\n@iqbots0\n\n@ri2da المطور'
     )
 
+async def handle_no_language_choice(update: Update, context: CallbackContext):
+    await update.message.reply_text("انتهى الوقت حاوب مجددا")
+    await context.bot.delete_message(chat_id=update.message.chat_id, message_id=update.message.message_id)
+
 def main() -> None:
     application = ApplicationBuilder().token(TOKEN).build()
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(MessageHandler(filters.PHOTO, ocr_image))
     application.add_handler(CallbackQueryHandler(language_callback))
+    application.add_handler(MessageHandler(filters.text & ~filters.command, handle_no_language_choice))
     logger.info('Starting bot')
     application.run_polling()
 
