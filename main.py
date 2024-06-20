@@ -11,7 +11,13 @@ from config import TOKEN, OCR_API_KEY
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-welcome = f'''
+# Dictionary to track last message times for spam protection
+last_message_time = {}
+
+async def start(update: Update, context: CallbackContext):
+    user_info = update.message.from_user
+    first_name = user_info.first_name
+    welcome = f'''
 {first_name} مرحباً
 
 **⚡️ البوت لإستخراج النصوص من الصور** \n \n **قم بإرسال صورة لاستخراج النص منها**
@@ -21,14 +27,7 @@ welcome = f'''
 /start - أمر البداية
 /help - للحصول على مساعدة
 '''
-
-# Dictionary to track last message times for spam protection
-last_message_time = {}
-
-async def start(update: Update, context: CallbackContext):
-    user_info = update.message.from_user
-    first_name = user_info.first_name
-    await asyncio.sleep(1)  # Simulating some asynchronous task
+    #await asyncio.sleep(1)  # Simulating some asynchronous task
     await update.message.reply_text(welcome, parse_mode="MarkdownV2")
 
 async def help_command(update: Update, context: CallbackContext):
