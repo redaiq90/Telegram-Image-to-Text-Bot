@@ -73,7 +73,7 @@ async def start(update: Update, context: CallbackContext):
 /start أمر البداية
 /help للحصول على مساعدة
 '''
-    await update.message.reply_text(welcome, parse_mode=ParseMode.MARKDOWN_V2)
+    await update.message.reply_text(welcome, parse_mode="MarkdownV2")
 
 
 
