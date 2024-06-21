@@ -102,7 +102,8 @@ async def ocr_image(update: Update, context: CallbackContext):
         # Schedule deletion if language is not chosen within 15 minutes
         loop = asyncio.get_event_loop()
         loop.create_task(delete_image_after_timeout(context, update.message.chat_id, message.message_id, photo_path))
-
+    except TypeError:
+        await update.message.reply_text("انتهى الوقت، حاول إرسال صورا مجدداً")
     except Exception as e:
         await update.message.reply_text(f'حدث خطأ:\n {str(e)}\n@ri2da قم يإعادة توجيه الرسالة للمطور')
         logger.error(f'Exception: {e}')
