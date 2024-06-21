@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackContext, MessageHandler, filters, CallbackQueryHandler
 from config import TOKEN, OCR_API_KEY
-import aiosqlite
+import sqlite3
 
 # Set up logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -17,26 +17,31 @@ OWNER_ID = 1374312239
 # Dictionary to track last message times for spam protection
 last_message_time = {}
 
-async def init_db():
-    async with aiosqlite.connect('users.db') as db:
-        await db.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT,
-            user_id INTEGER UNIQUE
-        )
-        ''')
-        await db.commit()
-        print("Database Working!")
+def init_db():
+    conn = sqlite3.connect('users.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT,
+        user_id INTEGER UNIQUE
+    )
+    ''')
+    conn.commit()
+    conn.close()
+    print("Database Working!")
 
-async def add_user_if_not_exists(user_id, username):
-    async with aiosqlite.connect('users.db') as db:
-        async with db.execute('SELECT * FROM users WHERE user_id = ?', (user_id,)) as cursor:
-            user = await cursor.fetchone()
-            if not user:
-                await db.execute('INSERT INTO users (username, user_id) VALUES (?, ?)', (username, user_id))
-                await db.commit()
-                return True
+def add_user_if_not_exists(user_id, username):
+    conn = sqlite3.connect('users.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM users WHERE user_id = ?', (user_id,))
+    user = cursor.fetchone()
+    if not user:
+        cursor.execute('INSERT INTO users (username, user_id) VALUES (?, ?)', (username, user_id))
+        conn.commit()
+        conn.close()
+        return True
+    conn.close()
     return False
 
 # Function to get the profile link of a user
@@ -50,7 +55,7 @@ async def start(update: Update, context: CallbackContext):
     username = user_info.username
 
     # Check if user is new and add to the database if so
-    is_new_user = await add_user_if_not_exists(user_id, username)
+    is_new_user = add_user_if_not_exists(user_id, username)
 
     # Notify the owner about the new user
     if is_new_user:
@@ -224,8 +229,8 @@ async def handle_no_language_choice(update: Update, context: CallbackContext):
     await update.message.reply_text("انتهى الوقت حاوب مجددا")
     await context.bot.delete_message(chat_id=update.message.chat_id, message_id=update.message.message_id)
 
-async def main() -> None:
-    await init_db()
+def main() -> None:
+    init_db()
     application = ApplicationBuilder().token(TOKEN).build()
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
@@ -233,7 +238,7 @@ async def main() -> None:
     application.add_handler(CallbackQueryHandler(language_callback))
     #application.add_handler(MessageHandler(filters.TEXT & filters.command, handle_no_language_choice))
     logger.info('Starting bot')
-    await application.run_polling()
+    application.run_polling()
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    main()
