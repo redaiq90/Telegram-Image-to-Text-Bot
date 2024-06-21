@@ -43,7 +43,7 @@ async def add_user_if_not_exists(user_id, username):
 def get_profile_link(username):
     return f"https://t.me/{username}" if username else "N/A"
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def start(update: Update, context: CallbackContext):
     user_info = update.message.from_user
     first_name = user_info.first_name
     user_id = user_info.id
