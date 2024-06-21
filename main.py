@@ -226,14 +226,14 @@ async def handle_no_language_choice(update: Update, context: CallbackContext):
 
 async def main() -> None:
     await init_db()
-    await application = ApplicationBuilder().token(TOKEN).build()
-    await application.add_handler(CommandHandler("start", start))
-    await application.add_handler(CommandHandler("help", help_command))
-    await application.add_handler(MessageHandler(filters.PHOTO, ocr_image))
-    await application.add_handler(CallbackQueryHandler(language_callback))
+    application = ApplicationBuilder().token(TOKEN).build()
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(MessageHandler(filters.PHOTO, ocr_image))
+    application.add_handler(CallbackQueryHandler(language_callback))
     #application.add_handler(MessageHandler(filters.TEXT & filters.command, handle_no_language_choice))
     logger.info('Starting bot')
-    
+    await application.run_polling()
 
 if __name__ == '__main__':
     asyncio.run(main())
