@@ -224,7 +224,7 @@ async def handle_no_language_choice(update: Update, context: CallbackContext):
     await update.message.reply_text("انتهى الوقت حاوب مجددا")
     await context.bot.delete_message(chat_id=update.message.chat_id, message_id=update.message.message_id)
 
-def main() -> None:
+async def main() -> None:
     await init_db()
     application = ApplicationBuilder().token(TOKEN).build()
     application.add_handler(CommandHandler("start", start))
@@ -236,4 +236,4 @@ def main() -> None:
     application.run_polling()
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
