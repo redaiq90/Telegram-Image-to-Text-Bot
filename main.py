@@ -29,7 +29,7 @@ def init_db():
     ''')
     conn.commit()
     conn.close()
-    print("Database Working!")
+    logger.info("Database Working!")
 
 def add_user_if_not_exists(user_id, username):
     conn = sqlite3.connect('users.db')
