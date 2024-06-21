@@ -6,17 +6,58 @@ from datetime import datetime, timedelta
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton, Update
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackContext, MessageHandler, filters, CallbackQueryHandler
 from config import TOKEN, OCR_API_KEY
+import aiosqlite
 
 # Set up logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+OWNER_ID = 1374312239
+
 # Dictionary to track last message times for spam protection
 last_message_time = {}
 
-async def start(update: Update, context: CallbackContext):
+async def init_db():
+    async with aiosqlite.connect('users.db') as db:
+        await db.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT,
+            user_id INTEGER UNIQUE
+        )
+        ''')
+        await db.commit()
+        print("Database Working!")
+
+async def add_user_if_not_exists(user_id, username):
+    async with aiosqlite.connect('users.db') as db:
+        async with db.execute('SELECT * FROM users WHERE user_id = ?', (user_id,)) as cursor:
+            user = await cursor.fetchone()
+            if not user:
+                await db.execute('INSERT INTO users (username, user_id) VALUES (?, ?)', (username, user_id))
+                await db.commit()
+                return True
+    return False
+
+# Function to get the profile link of a user
+def get_profile_link(username):
+    return f"https://t.me/{username}" if username else "N/A"
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_info = update.message.from_user
     first_name = user_info.first_name
+    user_id = user_info.id
+    username = user_info.username
+
+    # Check if user is new and add to the database if so
+    is_new_user = await add_user_if_not_exists(user_id, username)
+
+    # Notify the owner about the new user
+    if is_new_user:
+        profile_link = get_profile_link(username)
+        notification = f"New user entered the bot:\n\nID: {user_id}\nUsername: @{username}\nProfile: {profile_link}"
+        await context.bot.send_message(chat_id=OWNER_ID, text=notification)
+
     welcome = f'''
 {first_name} مرحباً
 
@@ -27,8 +68,9 @@ async def start(update: Update, context: CallbackContext):
 /start أمر البداية
 /help للحصول على مساعدة
 '''
-    #await asyncio.sleep(1)  # Simulating some asynchronous task
-    await update.message.reply_text(welcome, parse_mode="MarkdownV2")
+    await update.message.reply_text(welcome, parse_mode=ParseMode.MARKDOWN_V2)
+
+
 
 async def help_command(update: Update, context: CallbackContext):
     #await asyncio.sleep(1)  # Simulating some asynchronous task
@@ -183,6 +225,7 @@ async def handle_no_language_choice(update: Update, context: CallbackContext):
     await context.bot.delete_message(chat_id=update.message.chat_id, message_id=update.message.message_id)
 
 def main() -> None:
+    await init_db()
     application = ApplicationBuilder().token(TOKEN).build()
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
