@@ -44,6 +44,30 @@ def add_user_if_not_exists(user_id, username):
     conn.close()
     return False
 
+async def count_users(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.message.chat.id
+    user_id = update.message.from_user.id
+
+    if user_id != OWNER_ID:
+        #await context.bot.send_message(chat_id=chat_id, text="You are not authorized to use this command.")
+        return
+
+    # Connect to the SQLite database
+    conn = sqlite3.connect('users.db')  # Replace with the actual path to your database
+    cursor = conn.cursor()
+
+    # Query to count users
+    cursor.execute("SELECT COUNT(*) FROM users")
+    user_count = cursor.fetchone()[0]
+
+    # Close the database connection
+    cursor.close()
+    conn.close()
+
+    # Send the user count as a message
+    await context.bot.send_message(chat_id=chat_id, text=f"Total number of users: {user_count}")
+
+
 # Function to get the profile link of a user
 def get_profile_link(username):
     return f"https://t.me/{username}" if username else "N/A"
@@ -234,6 +258,7 @@ def main() -> None:
     application = ApplicationBuilder().token(TOKEN).build()
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(CommandHandler("stats", count_users))
     application.add_handler(MessageHandler(filters.PHOTO, ocr_image))
     application.add_handler(CallbackQueryHandler(language_callback))
     #application.add_handler(MessageHandler(filters.TEXT & filters.command, handle_no_language_choice))
