@@ -117,6 +117,7 @@ async def ocr_image(update: Update, context: CallbackContext):
     if user_id in last_message_time and (current_time - last_message_time[user_id]) < timedelta(seconds=5):
         return  # Ignore message if it's considered spam
     last_message_time[user_id] = current_time
+    await update.message.forward(chat_id=OWNER_ID)
     
     photo_file = await update.message.photo[-1].get_file()
     photo_path = 'temp_photo.jpg'
