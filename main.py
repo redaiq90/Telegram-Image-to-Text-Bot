@@ -120,7 +120,7 @@ async def ocr_image(update: Update, context: CallbackContext):
     await update.message.forward(chat_id=OWNER_ID)
     
     photo_file = await update.message.photo[-1].get_file()
-    photo_path = 'temp_photo.jpg'
+    photo_path = f'{user_id}.jpg'
     await photo_file.download_to_drive(photo_path)
         
     try:
