@@ -18,6 +18,10 @@ OWNER_ID = 1374312239
 last_message_time = {}
 
 def init_db():
+    filename = 'users.db'
+    if not os.path.isfile(filename):
+        with open(filename, 'w') as file:
+            pass
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
     cursor.execute('''
